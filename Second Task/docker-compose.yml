@@ -1,0 +1,40 @@
+version: '3'
+
+services:
+ webserver:
+  image: httpd:latest # образ Apache
+  volumes:
+   - ./apache.conf:/usr/local/apache2/conf/httpd.conf # монтирование локального файла ./apache.conf в файл /usr/local/apache2/conf/httpd.conf внутри контейнера
+  ports:
+   - "8080:80" # маппинг порта 80 контейнера на порт 8080 хоста
+  networks:
+   testnetwork: 
+    ipv4_address: 10.10.10.2 # сервис использует сеть testnetwork с адресом 10.10.10.2
+
+ database:
+  image: mysql:latest # образ MySQL
+  volumes:
+   - testdata:/var/lib/mysql # монтирование docker volume testdata в каталог /var/lib/mysql внутри контейнера
+  environment: # позволяет задать переменные среды для контейнера, в данном случае имя базы данных, пользователь и пароли
+   MYSQL_DATABASE: testDB
+   MYSQL_USER: yana
+   MYSQL_PASSWORD: testPassword
+   MYSQL_ROOT_PASSWORD: testPassword
+  networks:
+   testnetwork:
+    aliases: # задание альтернативных имен new_db и dev_db
+     - new_db
+     - dev_db
+    ipv4_address: 10.10.10.3 # сервис использует сеть testnetwork с адресом 10.10.10.3
+
+# определение docker volume с именем testdata, который будет использоваться для хранения данных
+volumes:
+ testdata:
+
+networks:
+ testnetwork: # определение сети с именем testnetwork
+  driver: bridge # указание типа bridge 
+  ipam:
+   driver: default # использование драйвера default для создания docker volume
+   config:
+    - subnet: 10.10.10.0/28 # Адресное пространство
